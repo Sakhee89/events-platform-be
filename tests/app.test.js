@@ -22,3 +22,15 @@ describe("/", () => {
       });
   });
 });
+
+describe("/api/users", () => {
+  test("Get: 200 sends an array of users to the client", () => {
+    return request(app)
+      .get("/api/users")
+      .expect(200)
+      .then((response) => {
+        console.log(response.body.users, "users");
+        // expect(response.users.length).toBe(3);
+      });
+  });
+});
