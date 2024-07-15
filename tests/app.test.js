@@ -1,16 +1,14 @@
 const mongoose = require("mongoose");
 const request = require("supertest");
 const app = require("../app");
+const { connectDB, seedData } = require("../db/seedData");
 
-require("dotenv").config({
-  path: `${__dirname}/../.env.development`,
+beforeAll(async () => {
+  await connectDB();
+  await seedData();
 });
 
-beforeEach(async () => {
-  await mongoose.connect(process.env.DATABASE_URL);
-});
-
-afterEach(async () => {
+afterAll(async () => {
   await mongoose.connection.close();
 });
 
