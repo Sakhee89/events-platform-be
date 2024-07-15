@@ -1,6 +1,6 @@
 const User = require("../models/user-model");
 
-exports.getUsers = (req, res, next) => {
+exports.getUsers = (req, res) => {
   User.find()
     .then((users) => {
       res.status(200).json({ users: users });
@@ -10,7 +10,7 @@ exports.getUsers = (req, res, next) => {
     });
 };
 
-exports.createUser = (req, res, next) => {
+exports.createUser = (req, res) => {
   const { firebaseUid, name, email, picture, role } = req.body;
 
   const newUser = new User({
