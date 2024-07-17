@@ -11,8 +11,4 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", apiRouter);
 
-app.get("/", (req, res) => {
-  res.status(200).json({ msg: "Hello World!" });
-});
-
 module.exports = app;
