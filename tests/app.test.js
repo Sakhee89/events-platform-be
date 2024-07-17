@@ -7,11 +7,11 @@ const User = require("../models/user-model");
 beforeAll(async () => {
   await connectDB();
   await seedData();
-});
+}, 20000);
 
 afterAll(async () => {
   await mongoose.connection.close();
-});
+}, 10000);
 
 describe("/api/users", () => {
   test("GET: 200 sends an array of users to the client", () => {
@@ -144,6 +144,26 @@ describe("api/events", () => {
       .expect(400)
       .then((response) => {
         expect(response.body.msg).toBe("Invalid Fields");
+      });
+  });
+
+  test("POST: 404 sends an appropriate status and error message when sending a body when user does not exist", () => {
+    const newEvent = {
+      title: "Community Meetup",
+      description: "A community gathering to discuss local events.",
+      date: new Date(),
+      location: "Community Hall",
+      price: 10,
+      theme: "Community",
+      createdBy: new mongoose.Types.ObjectId(),
+    };
+
+    return request(app)
+      .post("/api/events")
+      .send(newEvent)
+      .expect(404)
+      .then((response) => {
+        expect(response.body.msg).toBe("User not found");
       });
   });
 });
