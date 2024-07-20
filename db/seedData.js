@@ -16,43 +16,45 @@ if (!process.env.DATABASE_URL) {
 
 const connectDB = async () => {
   const mongoString = process.env.DATABASE_URL;
-  return await mongoose
+  return mongoose
     .connect(mongoString)
     .then(() => {
       console.log("Connected to MongoDB");
     })
     .catch((error) => {
-      console.log("Error connecting to MongoDB", error);
+      console.error("Error connecting to MongoDB", error);
     });
 };
 
 const seedData = async () => {
-  await User.deleteMany({})
-    .then(() => Event.deleteMany({}))
-    .then(() => User.insertMany(users))
-    .then((insertedUsers) => {
-      console.log("Users seeded successfully");
-      const userMap = insertedUsers.reduce((acc, user) => {
-        acc[user.firebaseUid] = user._id;
-        return acc;
-      }, {});
+  try {
+    await User.deleteMany({});
 
-      const updatedEvents = events.map((event) => {
-        const userId = userMap[event.createdBy];
-        return {
-          ...event,
-          createdBy: userId,
-        };
-      });
+    await Event.deleteMany({});
 
-      return Event.insertMany(updatedEvents);
-    })
-    .then(() => {
-      console.log("Events seeded successfully");
-    })
-    .catch((error) => {
-      console.error("Error seeding data", error);
+    const insertedUsers = await User.insertMany(users);
+
+    console.log("Users seeded successfully");
+
+    const userMap = insertedUsers.reduce((acc, user) => {
+      acc[user.firebaseUid] = user._id;
+      return acc;
+    }, {});
+
+    const updatedEvents = events.map((event) => {
+      const userId = userMap[event.createdBy];
+      return {
+        ...event,
+        createdBy: userId,
+      };
     });
+
+    await Event.insertMany(updatedEvents);
+
+    console.log("Events seeded successfully");
+  } catch (error) {
+    console.error("Error seeding data", error);
+  }
 };
 
 module.exports = {

@@ -1,5 +1,6 @@
 const Event = require("../models/event-model");
 const User = require("../models/user-model");
+const mongoose = require("mongoose");
 
 exports.getEvents = (req, res) => {
   Event.find()
@@ -39,5 +40,23 @@ exports.createEvent = (req, res) => {
       if (!res.headersSent) {
         res.status(500).json({ msg: error.message });
       }
+    });
+};
+
+exports.getEventById = (req, res) => {
+  const { id } = req.params;
+  const _id = new mongoose.Types.ObjectId(id);
+  console.log(_id);
+
+  Event.findOne({ _id })
+    .then((event) => {
+      if (!event) {
+        res.status(404).json({ msg: "Event not found" });
+        return;
+      }
+      res.status(200).json({ event: event });
+    })
+    .catch((error) => {
+      res.status(500).json({ msg: error.message });
     });
 };
