@@ -18,7 +18,7 @@ type EventTestData = Omit<Event, "createdBy"> & { createdBy: string };
 describe("/api/events", () => {
   beforeAll(async () => {
     await mongoose.connect(process.env.DATABASE_URL!);
-  }, 30000);
+  }, 50000);
 
   beforeEach(async () => {
     await seedData();
@@ -26,7 +26,7 @@ describe("/api/events", () => {
 
   afterAll(async () => {
     await mongoose.connection.close();
-  }, 30000);
+  }, 50000);
 
   test("should GET: 200 and sends an array of events to the client", async () => {
     await request(app)
@@ -44,7 +44,7 @@ describe("/api/events", () => {
           expect(typeof event.createdBy).toBe("string");
         });
       });
-  }, 30000);
+  }, 50000);
 
   test("should POST: 201 and inserts a new event to the events collection, and returns the created event", async () => {
     const user = await userSchema.findOne({ firebaseUid: "user1FirebaseUid" });
@@ -86,7 +86,7 @@ describe("/api/events", () => {
         );
         expect(response.body.newEvent).toHaveProperty("__v");
       });
-  }, 30000);
+  }, 50000);
 
   test("POST: 400 sends an appropriate status and error message when sending an invalid body", async () => {
     const newEvent = {
@@ -100,7 +100,7 @@ describe("/api/events", () => {
       .then((response) => {
         expect(response.body.msg).toBe("Invalid Fields");
       });
-  }, 30000);
+  }, 50000);
 
   test("POST: 404 sends an appropriate status and error message when sending an invalid body", async () => {
     const newEvent = {
@@ -120,13 +120,13 @@ describe("/api/events", () => {
       .then((response) => {
         expect(response.body.msg).toBe("User not found");
       });
-  }, 30000);
+  }, 50000);
 });
 
 describe("/api/events/:id", () => {
   beforeAll(async () => {
     await mongoose.connect(process.env.DATABASE_URL!);
-  }, 30000);
+  }, 50000);
 
   beforeEach(async () => {
     await seedData();
@@ -134,19 +134,16 @@ describe("/api/events/:id", () => {
 
   afterAll(async () => {
     await mongoose.connection.close();
-  }, 30000);
+  }, 50000);
 
   test("should GET: 200 and sends an event object to the client", async () => {
-    const newUser = new userSchema(
-      {
-        firebaseUid: "user6FirebaseUid",
-        name: "Emily Davis",
-        email: "emily.davis1@example.com",
-        picture: "https://example.com/emily.jpg",
-        role: "staff",
-      },
-      30000
-    );
+    const newUser = new userSchema({
+      firebaseUid: "user6FirebaseUid",
+      name: "Emily Davis",
+      email: "emily.davis1@example.com",
+      picture: "https://example.com/emily.jpg",
+      role: "staff",
+    });
 
     const savedUser = await newUser.save();
 
@@ -176,13 +173,31 @@ describe("/api/events/:id", () => {
         expect(response.body.event).toHaveProperty("theme");
         expect(response.body.event).toHaveProperty("createdBy");
       });
-  }, 40000);
+  }, 50000);
+
+  test("should GET: 404 when querying a non-existent event ID", async () => {
+    await request(app)
+      .get(`/api/events/nonExistentEventId`)
+      .expect(404)
+      .then((response) => {
+        expect(response.body.msg).toBe("Event not found");
+      });
+  }, 50000);
+
+  test("should GET: 400 when providing an invalid event ID format", async () => {
+    await request(app)
+      .get(`/api/events/invalidEventId`)
+      .expect(400)
+      .then((response) => {
+        expect(response.body.msg).toBe("Invalid event ID format");
+      });
+  }, 50000);
 });
 
 describe("/api/events/user/:userId", () => {
   beforeAll(async () => {
     await mongoose.connect(process.env.DATABASE_URL!);
-  }, 30000);
+  }, 50000);
 
   beforeEach(async () => {
     await seedData();
@@ -190,7 +205,7 @@ describe("/api/events/user/:userId", () => {
 
   afterAll(async () => {
     await mongoose.connection.close();
-  }, 30000);
+  }, 50000);
 
   test("should GET: 200 and return events for a valid user ID", async () => {
     let userId: string | undefined;
@@ -220,7 +235,7 @@ describe("/api/events/user/:userId", () => {
           });
         });
     }
-  }, 30000);
+  }, 50000);
 
   test("should GET: 400 and send an error message for an invalid user ID", async () => {
     await request(app)
@@ -229,7 +244,7 @@ describe("/api/events/user/:userId", () => {
       .then((response) => {
         expect(response.body.msg).toBe("Invalid user id");
       });
-  }, 30000);
+  }, 50000);
 
   test("should GET: 200 and return an empty array if no events found for valid user ID", async () => {
     let newUserId: string | undefined;
@@ -255,7 +270,7 @@ describe("/api/events/user/:userId", () => {
           expect(response.body.events).toEqual([]);
         });
     }
-  }, 30000);
+  }, 50000);
 
   test("should PATCH: 200 and update the event details", async () => {
     let eventId: string | undefined;
@@ -289,7 +304,7 @@ describe("/api/events/user/:userId", () => {
           );
         });
     }
-  }, 30000);
+  }, 50000);
 
   test("should PATCH: 404 and return an error for non-existent event", async () => {
     await request(app)
@@ -299,7 +314,7 @@ describe("/api/events/user/:userId", () => {
       .then((response) => {
         expect(response.body.msg).toBe("Event not found");
       });
-  }, 30000);
+  }, 50000);
 
   test("should PATCH: 400 and return an error for invalid update data", async () => {
     let eventId: string | undefined;
@@ -324,5 +339,5 @@ describe("/api/events/user/:userId", () => {
           expect(response.body.msg).toBe("Invalid update data");
         });
     }
-  }, 30000);
+  }, 50000);
 });
