@@ -11,6 +11,7 @@ const events: EventTestData[] = [
     price: 10,
     theme: "Health & Wellness",
     createdBy: "user1FirebaseUid",
+    attendees: [],
   },
   {
     title: "Book Club Meeting",
@@ -20,6 +21,7 @@ const events: EventTestData[] = [
     price: 0,
     theme: "Literature",
     createdBy: "user2FirebaseUid",
+    attendees: [],
   },
   {
     title: "Art Workshop",
@@ -29,6 +31,7 @@ const events: EventTestData[] = [
     price: 25,
     theme: "Arts & Crafts",
     createdBy: "user1FirebaseUid",
+    attendees: [],
   },
   {
     title: "Cooking Class",
@@ -38,6 +41,7 @@ const events: EventTestData[] = [
     price: 30,
     theme: "Food & Drink",
     createdBy: "user3FirebaseUid",
+    attendees: [],
   },
   {
     title: "Running Club",
@@ -47,6 +51,27 @@ const events: EventTestData[] = [
     price: 0,
     theme: "Sports & Fitness",
     createdBy: "user4FirebaseUid",
+    attendees: [],
+  },
+  {
+    title: "Photography Workshop",
+    description: "Learn the art of photography with practical sessions.",
+    date: new Date("2024-08-05T10:00:00Z"),
+    location: "Studio A",
+    price: 40,
+    theme: "Arts & Crafts",
+    createdBy: "user5FirebaseUid",
+    attendees: [],
+  },
+  {
+    title: "Chess Tournament",
+    description: "Challenge your skills in a chess tournament.",
+    date: new Date("2024-08-12T09:00:00Z"),
+    location: "Community Hall",
+    price: 15,
+    theme: "Games & Competitions",
+    createdBy: "user6FirebaseUid",
+    attendees: [],
   },
 ];
 

@@ -8,6 +8,7 @@ export type Event = {
   price: number;
   theme: string;
   createdBy: ObjectId;
+  attendees: ObjectId[];
 };
 
 const eventSchema = new mongoose.Schema<Event>({
@@ -22,6 +23,7 @@ const eventSchema = new mongoose.Schema<Event>({
     ref: "User",
     required: true,
   },
+  attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
 
 export default mongoose.model("Event", eventSchema);

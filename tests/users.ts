@@ -29,6 +29,20 @@ const users: User[] = [
     picture: "https://example.com/emily.jpg",
     role: "staff",
   },
+  {
+    firebaseUid: "user5FirebaseUid",
+    name: "Sarah Brown",
+    email: "sarah.brown@example.com",
+    picture: "https://example.com/sarah.jpg",
+    role: "member",
+  },
+  {
+    firebaseUid: "user6FirebaseUid",
+    name: "Tom White",
+    email: "tom.white@example.com",
+    picture: "https://example.com/tom.jpg",
+    role: "member",
+  },
 ];
 
 export default users;
