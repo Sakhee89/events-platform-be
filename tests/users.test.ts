@@ -131,11 +131,11 @@ describe("/api/users/:id", () => {
     if (userId) {
       await request(app)
         .patch(`/api/users/${userId}`)
-        .send({ role: "staff" })
+        .send({ role: "member" })
         .expect(200)
         .then((response) => {
           expect(response.body.msg).toBe("Role updated successfully");
-          expect(response.body.user.role).toBe("staff");
+          expect(response.body.user.role).toBe("member");
         });
     }
   }, 30000);

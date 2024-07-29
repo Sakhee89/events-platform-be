@@ -51,9 +51,13 @@ export const createEvent = async (req: Request, res: Response) => {
 
 export const getEventById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const _id = new mongoose.Types.ObjectId(id);
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ msg: "Invalid event ID format" });
+  }
 
   try {
+    const _id = new mongoose.Types.ObjectId(id);
     const event = await eventSchema.findOne({ _id });
 
     if (!event) {
@@ -86,11 +90,11 @@ export const getAllEventByUserId = async (req: Request, res: Response) => {
 };
 
 export const updateEvent = async (req: Request, res: Response) => {
-  const { eventId } = req.params;
+  const { id } = req.params;
   const updateFields = req.body;
 
   try {
-    const event = await eventSchema.findById(eventId);
+    const event = await eventSchema.findById(id);
 
     if (!event) {
       res.status(404).json({ msg: "Event not found" });
@@ -111,10 +115,15 @@ export const updateEvent = async (req: Request, res: Response) => {
 };
 
 export const deleteEvent = async (req: Request, res: Response) => {
-  const { eventId } = req.params;
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400).json({ msg: `Invalid event ID format` });
+    return;
+  }
 
   try {
-    const deletedEvent = await eventSchema.findByIdAndDelete(eventId);
+    const deletedEvent = await eventSchema.findByIdAndDelete(id);
 
     if (!deletedEvent) {
       res.status(404).json({ msg: "Event not found" });
