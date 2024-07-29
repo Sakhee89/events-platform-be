@@ -1,4 +1,8 @@
-module.exports = [
+import { Event } from "../models/eventSchema";
+
+type EventTestData = Omit<Event, "createdBy"> & { createdBy: string };
+
+const events: EventTestData[] = [
   {
     title: "Community Yoga Class",
     description: "A relaxing yoga session for all levels. Bring your own mat!",
@@ -45,3 +49,5 @@ module.exports = [
     createdBy: "user4FirebaseUid",
   },
 ];
+
+export default events;

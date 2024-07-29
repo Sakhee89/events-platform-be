@@ -1,4 +1,6 @@
-module.exports = [
+import { User } from "../models/userSchema";
+
+const users: User[] = [
   {
     firebaseUid: "user1FirebaseUid",
     name: "John Doe",
@@ -28,3 +30,5 @@ module.exports = [
     role: "staff",
   },
 ];
+
+export default users;
