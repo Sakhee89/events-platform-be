@@ -7,13 +7,15 @@ import {
   updateEvent,
   deleteEvent,
 } from "../controllers/event-controllers";
+import middleware from "../middleware";
 
 const eventRouter = express.Router();
 eventRouter.get("/", getEvents);
-eventRouter.post("/", createEvent);
 eventRouter.get("/:id", getEventById);
-eventRouter.patch("/:id", updateEvent);
 eventRouter.get("/user/:userId", getAllEventByUserId);
 eventRouter.delete("/:id", deleteEvent);
+
+eventRouter.post("/", createEvent).use(middleware.decodeToken);
+eventRouter.patch("/:id", updateEvent);
 
 export default eventRouter;

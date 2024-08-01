@@ -20,7 +20,7 @@ export const createUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const existingUser = await userSchema.findOne({ email });
+    const existingUser = await userSchema.findOne({ firebaseUid });
 
     if (existingUser) {
       res.status(201).json({ msg: "User already exist" });

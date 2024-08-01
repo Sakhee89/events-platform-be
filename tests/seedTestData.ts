@@ -1,10 +1,8 @@
 import mongoose from "mongoose";
 import eventSchema from "../models/eventSchema";
 import userSchema from "../models/userSchema";
-import signupSchema from "../models/signupSchema";
 import events from "./events";
 import users from "./users";
-import signups from "./signups";
 
 export const seedData = async () => {
   try {
@@ -30,29 +28,9 @@ export const seedData = async () => {
         createdBy: userId,
       };
     });
-    const insertedEvents = await eventSchema.insertMany(updatedEvents);
-    console.log("Events seeded successfully");
 
-    const eventMap = insertedEvents.reduce(
-      (acc: Record<string, string>, event) => {
-        const uniqueKey = `${event.title}-${event.date.toISOString()}`;
-        acc[uniqueKey] = event._id.toString();
-        return acc;
-      },
-      {}
-    );
+    await eventSchema.insertMany(updatedEvents);
 
-    const mappedSignups = signups.map((signup) => {
-      const uniqueKey = `${signup.event.title}-${new Date(
-        signup.event.date
-      ).toISOString()}`;
-      return {
-        user: userMap[signup.user],
-        event: eventMap[uniqueKey],
-      };
-    });
-
-    await signupSchema.insertMany(mappedSignups);
     console.log("Signups seeded successfully");
   } catch (error) {
     console.error("Error seeding data", error);
