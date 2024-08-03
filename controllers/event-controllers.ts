@@ -3,7 +3,7 @@ import eventSchema, { Event } from "../models/eventSchema";
 import mongoose from "mongoose";
 import userSchema from "../models/userSchema";
 import { extractTokenFromAuthorization } from "../utils/extractTokenFromAuthorization";
-import admin from "../config/firebaseConfig";
+import supabaseClient from "../config/supabaseConfig";
 
 export const getEvents = async (req: Request, res: Response) => {
   try {
@@ -32,7 +32,18 @@ export const getEvents = async (req: Request, res: Response) => {
 };
 
 export const createEvent = async (req: Request, res: Response) => {
-  const { title, description, date, location, price, theme } = req.body;
+  const {
+    title,
+    description,
+    date,
+    location,
+    price,
+    theme,
+    endDate,
+    calendarId,
+    eventId,
+    attendees,
+  } = req.body;
 
   if (!title || !description || !date || !location || !theme) {
     res.status(400).json({ msg: "Invalid Fields" });
@@ -40,11 +51,12 @@ export const createEvent = async (req: Request, res: Response) => {
   }
 
   const authToken = extractTokenFromAuthorization(req.headers.authorization!);
+  console.log("authToken", authToken);
 
   try {
-    const decodeValue = await admin.auth().verifyIdToken(authToken);
-    console.log(decodeValue);
-    const userId = decodeValue.uid;
+    const decodeValue = await supabaseClient.auth.getUser(authToken);
+    console.log("decodeValue", decodeValue);
+    const userId = decodeValue.data.user?.id;
 
     const user = await userSchema.findOne({
       firebaseUid: userId,
@@ -63,11 +75,15 @@ export const createEvent = async (req: Request, res: Response) => {
       price,
       theme,
       createdBy: user._id,
+      endDate,
+      calendarId,
+      eventId,
+      attendees,
     });
 
     await newEvent.save();
 
-    res.status(201).send({ newEvent: newEvent });
+    res.status(201).send(newEvent);
   } catch (error) {
     console.log(error);
     res.status(500).json("Internal Server Error");
@@ -76,14 +92,14 @@ export const createEvent = async (req: Request, res: Response) => {
 
 export const getEventById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const _id = new mongoose.Types.ObjectId(id);
-
-  if (!_id) {
-    return res.status(400).json({ msg: "Invalid event ID format" });
-  }
 
   try {
+    const _id = new mongoose.Types.ObjectId(id);
     const event = await eventSchema.findOne({ _id });
+
+    if (!_id) {
+      return res.status(400).json({ msg: "Invalid event ID format" });
+    }
 
     if (!event) {
       res.status(404).json({ msg: "Event not found" });
@@ -115,11 +131,20 @@ export const getAllEventByUserId = async (req: Request, res: Response) => {
 };
 
 export const updateEvent = async (req: Request, res: Response) => {
+  console.log("updateEvent");
   const { id } = req.params;
-  const _id = new mongoose.Types.ObjectId(id);
-  console.log(_id);
 
-  const { title, description, date, location, price, theme } = req.body;
+  const {
+    title,
+    description,
+    date,
+    location,
+    price,
+    theme,
+    endDate,
+    calendarId,
+    eventId,
+  } = req.body;
 
   if (!title || !description || !date || !location || !theme) {
     res.status(400).json({ msg: "Invalid Fields" });
@@ -128,16 +153,18 @@ export const updateEvent = async (req: Request, res: Response) => {
   const authToken = extractTokenFromAuthorization(req.headers.authorization!);
 
   try {
-    const decodeValue = await admin.auth().verifyIdToken(authToken);
-    const userId = decodeValue.uid;
+    const _id = new mongoose.Types.ObjectId(id);
+    const decodeValue = await supabaseClient.auth.getUser(authToken);
+    const userId = decodeValue.data.user?.id;
 
-    const event = await eventSchema.findById(_id);
     const user = await userSchema.findOne({
       firebaseUid: userId,
     });
 
-    if (!event || !user || user.role !== "staff") {
-      res.status(404).json({ msg: "Event not found" });
+    console.log("user", user);
+
+    if (!user || user.role !== "staff") {
+      res.status(403).json({ msg: "User is not authorised" });
       return;
     }
 
@@ -149,11 +176,16 @@ export const updateEvent = async (req: Request, res: Response) => {
       price,
       theme,
       createdBy: user._id,
+      endDate,
+      calendarId,
+      eventId,
     });
 
-    res.status(200).json({ msg: "Event updated successfully", updatedEvent });
+    console.log("updatedEvent", updatedEvent);
+
+    res.status(201).send(updatedEvent);
   } catch (error) {
-    console.error("Error updating event", error);
+    console.log(error);
     res.status(500).json("Internal Server Error");
   }
 };
@@ -161,12 +193,13 @@ export const updateEvent = async (req: Request, res: Response) => {
 export const deleteEvent = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400).json({ msg: `Invalid event ID format` });
-    return;
-  }
-
   try {
+    const _id = mongoose.Types.ObjectId.isValid(id);
+
+    if (!_id) {
+      res.status(400).json({ msg: `Invalid event ID format` });
+      return;
+    }
     const deletedEvent = await eventSchema.findByIdAndDelete(id);
 
     if (!deletedEvent) {
@@ -178,5 +211,52 @@ export const deleteEvent = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting event", error);
     res.status(500).json({ msg: "Internal Server Error" });
+  }
+};
+
+export const addAttendeeEvent = async (req: Request, res: Response) => {
+  console.log("addAttendeeEvent");
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(400).json({ msg: "eventId cannot be empty" });
+    return;
+  }
+  const authToken = extractTokenFromAuthorization(req.headers.authorization!);
+
+  try {
+    const _id = new mongoose.Types.ObjectId(id);
+    const decodeValue = await supabaseClient.auth.getUser(authToken);
+    const userId = decodeValue.data.user?.id;
+
+    const user = await userSchema.findOne({
+      firebaseUid: userId,
+    });
+
+    console.log("user", user);
+
+    if (!user) {
+      res.status(403).json({ msg: "User is not authorised" });
+      return;
+    }
+
+    const existingEvent = await eventSchema.findOne(_id);
+
+    console.log("existingEvent", existingEvent);
+
+    if (existingEvent?.attendees.includes(user.email)) {
+      res.status(201).send(existingEvent);
+      return;
+    }
+    const updatedEvent = await eventSchema.findByIdAndUpdate(_id, {
+      attendees: [...(existingEvent?.attendees || []), user.email],
+    });
+
+    console.log("updatedEvent", updatedEvent);
+
+    res.status(201).send(updatedEvent);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Internal Server Error");
   }
 };

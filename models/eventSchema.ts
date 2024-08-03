@@ -8,13 +8,17 @@ export type Event = {
   price: number;
   theme: string;
   createdBy: ObjectId;
-  attendees: ObjectId[];
+  endDate: Date;
+  calendarId: string;
+  eventId: string;
+  attendees: string[];
 };
 
 const eventSchema = new mongoose.Schema<Event>({
   title: { type: String, required: true },
   description: { type: String, required: true },
   date: { type: Date, required: true },
+  endDate: { type: Date, required: false },
   location: { type: String, required: true },
   price: { type: Number, default: 0 },
   theme: { type: String, required: true },
@@ -23,7 +27,9 @@ const eventSchema = new mongoose.Schema<Event>({
     ref: "User",
     required: true,
   },
-  attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  calendarId: { type: String, required: false },
+  eventId: { type: String, required: false },
+  attendees: [{ type: String, required: false }],
 });
 
 export default mongoose.model("Event", eventSchema);

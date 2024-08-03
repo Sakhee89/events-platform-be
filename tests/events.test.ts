@@ -37,7 +37,8 @@ describe("/api/events", () => {
         response.body.events.forEach((event: EventTestData) => {
           expect(typeof event.title).toBe("string");
           expect(typeof event.description).toBe("string");
-          expect(typeof event.date).toBe("string");
+          expect(typeof event.startDate).toBe("string");
+          expect(typeof event.endDate).toBe("string");
           expect(typeof event.location).toBe("string");
           expect(typeof event.price).toBe("number");
           expect(typeof event.theme).toBe("string");

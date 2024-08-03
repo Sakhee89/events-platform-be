@@ -14,14 +14,16 @@ export const getUsers = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
   const { firebaseUid, name, email, picture, role } = req.body;
 
+  console.log("checking for valid fields");
+
   if (!firebaseUid || !name || !email) {
     res.status(400).json({ msg: "Invalid fields" });
     return;
   }
-
+  console.log("checking for existing user");
   try {
     const existingUser = await userSchema.findOne({ firebaseUid });
-
+    console.log("existinguser", existingUser);
     if (existingUser) {
       res.status(201).json({ msg: "User already exist" });
       return;
@@ -36,9 +38,11 @@ export const createUser = async (req: Request, res: Response) => {
     });
 
     await newUser.save();
+    console.log("saved user");
 
     res.status(201).json({ newUser: newUser });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ msg: "Internal Server Error" });
   }
 };
