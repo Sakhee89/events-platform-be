@@ -11,6 +11,10 @@ const userRouter = express.Router();
 userRouter.get("/", getUsers);
 userRouter.get("/:id", getUserById);
 userRouter.patch("/:id", updateUser);
-userRouter.post("/", createUser).use(decodeToken);
+if (process.env.NODE_ENV !== "development") {
+  userRouter.post("/", createUser).use(decodeToken);
+} else {
+  userRouter.post("/", createUser);
+}
 
 export default userRouter;

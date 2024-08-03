@@ -15,9 +15,16 @@ eventRouter.get("/", getEvents);
 eventRouter.get("/:id", getEventById);
 eventRouter.get("/user/:userId", getAllEventByUserId);
 
-eventRouter.delete("/:id", deleteEvent).use(decodeToken);
-eventRouter.post("/", createEvent).use(decodeToken);
-eventRouter.patch("/:id", updateEvent).use(decodeToken);
-eventRouter.patch("/attend/:id", addAttendeeEvent).use(decodeToken);
+if (process.env.NODE_ENV !== "development") {
+  eventRouter.delete("/:id", deleteEvent).use(decodeToken);
+  eventRouter.post("/", createEvent).use(decodeToken);
+  eventRouter.patch("/:id", updateEvent).use(decodeToken);
+  eventRouter.patch("/attend/:id", addAttendeeEvent).use(decodeToken);
+} else {
+  eventRouter.delete("/:id", deleteEvent);
+  eventRouter.post("/", createEvent);
+  eventRouter.patch("/:id", updateEvent);
+  eventRouter.patch("/attend/:id", addAttendeeEvent);
+}
 
 export default eventRouter;

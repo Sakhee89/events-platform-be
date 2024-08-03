@@ -59,7 +59,7 @@ export const createEvent = async (req: Request, res: Response) => {
     const userId = decodeValue.data.user?.id;
 
     const user = await userSchema.findOne({
-      firebaseUid: userId,
+      uid: userId,
     });
 
     if (!user) {
@@ -81,9 +81,9 @@ export const createEvent = async (req: Request, res: Response) => {
       attendees,
     });
 
-    await newEvent.save();
+    const savedEvent = await newEvent.save();
 
-    res.status(201).send(newEvent);
+    res.status(201).send(savedEvent);
   } catch (error) {
     console.log(error);
     res.status(500).json("Internal Server Error");
@@ -93,13 +93,13 @@ export const createEvent = async (req: Request, res: Response) => {
 export const getEventById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ msg: "Invalid event ID format" });
+  }
+
   try {
     const _id = new mongoose.Types.ObjectId(id);
     const event = await eventSchema.findOne({ _id });
-
-    if (!_id) {
-      return res.status(400).json({ msg: "Invalid event ID format" });
-    }
 
     if (!event) {
       res.status(404).json({ msg: "Event not found" });
@@ -116,7 +116,7 @@ export const getAllEventByUserId = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
   try {
-    const user = await userSchema.findOne({ firebaseUid: userId });
+    const user = await userSchema.findOne({ uid: userId });
 
     if (!user) {
       res.status(400).json({ msg: "Invalid user id" });
@@ -131,7 +131,6 @@ export const getAllEventByUserId = async (req: Request, res: Response) => {
 };
 
 export const updateEvent = async (req: Request, res: Response) => {
-  console.log("updateEvent");
   const { id } = req.params;
 
   const {
@@ -153,12 +152,16 @@ export const updateEvent = async (req: Request, res: Response) => {
   const authToken = extractTokenFromAuthorization(req.headers.authorization!);
 
   try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ msg: "Invalid event ID format" });
+    }
+
     const _id = new mongoose.Types.ObjectId(id);
     const decodeValue = await supabaseClient.auth.getUser(authToken);
     const userId = decodeValue.data.user?.id;
 
     const user = await userSchema.findOne({
-      firebaseUid: userId,
+      uid: userId,
     });
 
     console.log("user", user);
@@ -180,8 +183,6 @@ export const updateEvent = async (req: Request, res: Response) => {
       calendarId,
       eventId,
     });
-
-    console.log("updatedEvent", updatedEvent);
 
     res.status(201).send(updatedEvent);
   } catch (error) {
@@ -230,7 +231,7 @@ export const addAttendeeEvent = async (req: Request, res: Response) => {
     const userId = decodeValue.data.user?.id;
 
     const user = await userSchema.findOne({
-      firebaseUid: userId,
+      uid: userId,
     });
 
     console.log("user", user);

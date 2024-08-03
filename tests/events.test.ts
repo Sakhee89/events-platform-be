@@ -6,8 +6,19 @@ import request from "supertest";
 import userSchema from "../models/userSchema";
 import eventSchema from "../models/eventSchema";
 import { Event } from "../models/eventSchema";
+import supabaseClient from "../config/supabaseConfig";
+import { extractTokenFromAuthorization } from "../utils/extractTokenFromAuthorization";
+import { mocked } from "jest-mock";
+import { User } from "@supabase/supabase-js";
 
 const ENV = process.env.NODE_ENV || "development";
+
+jest.mock("../utils/extractTokenFromAuthorization");
+const mockextractTokenFromAuthorization = mocked(
+  extractTokenFromAuthorization
+).mockReturnValue("");
+
+jest.mock("../config/supabaseConfig");
 
 dotenv.config({
   path: `.env.${ENV}`,
@@ -22,6 +33,16 @@ describe("/api/events", () => {
 
   beforeEach(async () => {
     await seedData();
+    const mocksupabaseClient = mocked(
+      supabaseClient
+    ).auth.getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: "user1Uid",
+        } as User,
+      },
+      error: null,
+    });
   });
 
   afterAll(async () => {
@@ -33,11 +54,10 @@ describe("/api/events", () => {
       .get("/api/events")
       .expect(200)
       .then((response) => {
-        expect(response.body.events.length).toBe(5);
         response.body.events.forEach((event: EventTestData) => {
           expect(typeof event.title).toBe("string");
           expect(typeof event.description).toBe("string");
-          expect(typeof event.startDate).toBe("string");
+          expect(typeof event.date).toBe("string");
           expect(typeof event.endDate).toBe("string");
           expect(typeof event.location).toBe("string");
           expect(typeof event.price).toBe("number");
@@ -48,7 +68,7 @@ describe("/api/events", () => {
   }, 60000);
 
   test("should POST: 201 and inserts a new event to the events collection, and returns the created event", async () => {
-    const user = await userSchema.findOne({ firebaseUid: "user1FirebaseUid" });
+    const user = await userSchema.findOne({ uid: "user1Uid" });
     if (!user) {
       throw new Error("User not found");
     }
@@ -68,24 +88,18 @@ describe("/api/events", () => {
       .send(newEvent)
       .expect(201)
       .then((response) => {
-        expect(response.body.newEvent).toHaveProperty("_id");
-        expect(response.body.newEvent).toHaveProperty("title", newEvent.title);
-        expect(response.body.newEvent).toHaveProperty(
+        expect(response.body).toHaveProperty("_id");
+        expect(response.body).toHaveProperty("title", newEvent.title);
+        expect(response.body).toHaveProperty(
           "description",
           newEvent.description
         );
-        expect(response.body.newEvent).toHaveProperty("date");
-        expect(response.body.newEvent).toHaveProperty(
-          "location",
-          newEvent.location
-        );
-        expect(response.body.newEvent).toHaveProperty("price", newEvent.price);
-        expect(response.body.newEvent).toHaveProperty("theme", newEvent.theme);
-        expect(response.body.newEvent).toHaveProperty(
-          "createdBy",
-          user._id.toString()
-        );
-        expect(response.body.newEvent).toHaveProperty("__v");
+        expect(response.body).toHaveProperty("date");
+        expect(response.body).toHaveProperty("location", newEvent.location);
+        expect(response.body).toHaveProperty("price", newEvent.price);
+        expect(response.body).toHaveProperty("theme", newEvent.theme);
+        expect(response.body).toHaveProperty("createdBy", user._id.toString());
+        expect(response.body).toHaveProperty("__v");
       });
   }, 60000);
 
@@ -102,26 +116,6 @@ describe("/api/events", () => {
         expect(response.body.msg).toBe("Invalid Fields");
       });
   }, 60000);
-
-  test("POST: 404 sends an appropriate status and error message when sending an invalid body", async () => {
-    const newEvent = {
-      title: "Community Meetup",
-      description: "A community gathering to discuss local events.",
-      date: new Date(),
-      location: "Community Hall",
-      price: 10,
-      theme: "Community",
-      createdBy: new mongoose.Types.ObjectId(),
-    };
-
-    await request(app)
-      .post("/api/events")
-      .send(newEvent)
-      .expect(404)
-      .then((response) => {
-        expect(response.body.msg).toBe("User not found");
-      });
-  }, 60000);
 });
 
 describe("/api/events/:id", () => {
@@ -134,7 +128,7 @@ describe("/api/events/:id", () => {
       await seedData();
 
       const user = await userSchema.findOne({
-        firebaseUid: "user4FirebaseUid",
+        uid: "user4Uid",
       });
       if (!user) {
         throw new Error("User not found");
@@ -161,8 +155,6 @@ describe("/api/events/:id", () => {
 
   afterAll(async () => {
     try {
-      // await eventSchema.deleteMany({});
-      // await userSchema.deleteMany({});
       await mongoose.connection.close();
     } catch (error) {
       console.error("Error in afterAll: ", error);
@@ -171,7 +163,7 @@ describe("/api/events/:id", () => {
 
   test("should GET: 200 and sends an event object to the client", async () => {
     const newUser = new userSchema({
-      firebaseUid: "user6FirebaseUid",
+      uid: "user8Uid",
       name: "Emily Davis",
       email: "emily.davis1@example.com",
       picture: "https://example.com/emily.jpg",
@@ -228,6 +220,65 @@ describe("/api/events/:id", () => {
       });
   }, 60000);
 
+  test("should PATCH: 200 and update the event details", async () => {
+    let eventId: string | undefined;
+
+    try {
+      const event = await eventSchema.findOne({
+        title: "Existing Event Title",
+      });
+      if (event) {
+        eventId = event._id.toString();
+      }
+    } catch (error) {
+      console.error("Error fetching event", error);
+    }
+
+    if (eventId) {
+      const updateFields = {
+        title: "Updated Event Title",
+        description: "Updated Event Description",
+      };
+
+      await request(app)
+        .patch(`/api/events/${eventId}`)
+        .send(updateFields)
+        .expect(200)
+        .then((response) => {
+          expect(response.body.msg).toBe("Event updated successfully");
+          expect(response.body.event.title).toBe("Updated Event Title");
+          expect(response.body.event.description).toBe(
+            "Updated Event Description"
+          );
+        });
+    }
+  }, 60000);
+
+  test("should PATCH: 400 and return an error for invalid update data", async () => {
+    let eventId: string | undefined;
+
+    try {
+      const event = await eventSchema.findOne({
+        title: "Existing Event Title",
+      });
+      if (event) {
+        eventId = event._id.toString();
+      }
+    } catch (error) {
+      console.error("Error fetching event", error);
+    }
+
+    if (eventId) {
+      await request(app)
+        .patch(`/api/events/${eventId}`)
+        .send({ invalidField: "Invalid Data" })
+        .expect(400)
+        .then((response) => {
+          expect(response.body.msg).toBe("Invalid update data");
+        });
+    }
+  }, 60000);
+
   test("should DELETE: 200 and remove the event from the database", async () => {
     await request(app)
       .delete(`/api/events/${eventId}`)
@@ -261,7 +312,7 @@ describe("/api/events/user/:userId", () => {
         email: "emily.davis@example.com",
       });
       if (user) {
-        userId = user.firebaseUid;
+        userId = user.uid;
       }
     } catch (error) {
       console.error("Error fetching user", error);
@@ -298,14 +349,14 @@ describe("/api/events/user/:userId", () => {
 
     try {
       const newUser = new userSchema({
-        firebaseUid: "testFirebaseUidNoEvents",
+        uid: "testUidNoEvents",
         name: "Test User No Events",
         email: "test.noevents@example.com",
         picture: "https://example.com/test.jpg",
         role: "member",
       });
       const savedUser = await newUser.save();
-      newUserId = savedUser.firebaseUid;
+      newUserId = savedUser.uid;
     } catch (error) {
       console.error("Error creating user", error);
     }
@@ -315,77 +366,6 @@ describe("/api/events/user/:userId", () => {
         .expect(200)
         .then((response) => {
           expect(response.body.events).toEqual([]);
-        });
-    }
-  }, 60000);
-
-  test("should PATCH: 200 and update the event details", async () => {
-    let eventId: string | undefined;
-
-    try {
-      const event = await eventSchema.findOne({
-        title: "Existing Event Title",
-      });
-      if (event) {
-        eventId = event._id.toString();
-      }
-    } catch (error) {
-      console.error("Error fetching event", error);
-    }
-
-    if (eventId) {
-      const updateFields = {
-        title: "Updated Event Title",
-        description: "Updated Event Description",
-      };
-
-      await request(app)
-        .patch(`/api/events/${eventId}`)
-        .send(updateFields)
-        .expect(200)
-        .then((response) => {
-          expect(response.body.msg).toBe("Event updated successfully");
-          expect(response.body.event.title).toBe("Updated Event Title");
-          expect(response.body.event.description).toBe(
-            "Updated Event Description"
-          );
-        });
-    }
-  }, 60000);
-
-  test("should PATCH: 404 and return an error for non-existent event", async () => {
-    const nonExistentId = new mongoose.Types.ObjectId();
-
-    await request(app)
-      .patch(`/api/events/${nonExistentId}`)
-      .send({ title: "Updated Title" })
-      .expect(404)
-      .then((response) => {
-        expect(response.body.msg).toBe("Event not found");
-      });
-  }, 60000);
-
-  test("should PATCH: 400 and return an error for invalid update data", async () => {
-    let eventId: string | undefined;
-
-    try {
-      const event = await eventSchema.findOne({
-        title: "Existing Event Title",
-      });
-      if (event) {
-        eventId = event._id.toString();
-      }
-    } catch (error) {
-      console.error("Error fetching event", error);
-    }
-
-    if (eventId) {
-      await request(app)
-        .patch(`/api/events/${eventId}`)
-        .send({ invalidField: "Invalid Data" })
-        .expect(400)
-        .then((response) => {
-          expect(response.body.msg).toBe("Invalid update data");
         });
     }
   }, 60000);

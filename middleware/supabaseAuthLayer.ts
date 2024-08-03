@@ -27,9 +27,11 @@ export const decodeToken = async (
     console.log("error", error);
 
     if ((error as { code: string }).code === "auth/argument-error") {
-      return res.status(403).json({ message: "Not authorised" });
+      res.status(403).json({ message: "Not authorised" });
+      return;
     }
 
-    return res.status(500).json({ message: "Internal Error" });
+    res.status(500).json({ message: "Internal Error" });
+    return;
   }
 };

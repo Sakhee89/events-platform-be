@@ -2,42 +2,42 @@ import { User } from "../models/userSchema";
 
 const users: User[] = [
   {
-    firebaseUid: "user1FirebaseUid",
+    uid: "user1Uid",
     name: "John Doe",
     email: "john.doe@example.com",
     picture: "https://example.com/john.jpg",
     role: "staff",
   },
   {
-    firebaseUid: "user2FirebaseUid",
+    uid: "user2Uid",
     name: "Jane Smith",
     email: "jane.smith@example.com",
     picture: "https://example.com/jane.jpg",
     role: "member",
   },
   {
-    firebaseUid: "user3FirebaseUid",
+    uid: "user3Uid",
     name: "Mike Johnson",
     email: "mike.johnson@example.com",
     picture: "https://example.com/mike.jpg",
     role: "member",
   },
   {
-    firebaseUid: "user4FirebaseUid",
+    uid: "user4Uid",
     name: "Emily Davis",
     email: "emily.davis@example.com",
     picture: "https://example.com/emily.jpg",
     role: "staff",
   },
   {
-    firebaseUid: "user5FirebaseUid",
+    uid: "user5Uid",
     name: "Sarah Brown",
     email: "sarah.brown@example.com",
     picture: "https://example.com/sarah.jpg",
     role: "member",
   },
   {
-    firebaseUid: "user6FirebaseUid",
+    uid: "user6Uid",
     name: "Tom White",
     email: "tom.white@example.com",
     picture: "https://example.com/tom.jpg",

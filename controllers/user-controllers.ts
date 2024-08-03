@@ -12,25 +12,23 @@ export const getUsers = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { firebaseUid, name, email, picture, role } = req.body;
+  const { uid, name, email, picture, role } = req.body;
 
-  console.log("checking for valid fields");
-
-  if (!firebaseUid || !name || !email) {
+  if (!uid || !name || !email) {
     res.status(400).json({ msg: "Invalid fields" });
     return;
   }
-  console.log("checking for existing user");
+
   try {
-    const existingUser = await userSchema.findOne({ firebaseUid });
-    console.log("existinguser", existingUser);
+    const existingUser = await userSchema.findOne({ uid });
+
     if (existingUser) {
       res.status(201).json({ msg: "User already exist" });
       return;
     }
 
     const newUser = new userSchema({
-      firebaseUid,
+      uid,
       name,
       email,
       picture,
@@ -38,7 +36,6 @@ export const createUser = async (req: Request, res: Response) => {
     });
 
     await newUser.save();
-    console.log("saved user");
 
     res.status(201).json({ newUser: newUser });
   } catch (error) {
@@ -51,7 +48,7 @@ export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const user = await userSchema.findOne({ firebaseUid: id });
+    const user = await userSchema.findOne({ uid: id });
 
     if (!user) {
       res.status(404).json({ msg: "User not found" });
@@ -75,7 +72,7 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await userSchema.findOne({ firebaseUid: id });
+    const user = await userSchema.findOne({ uid: id });
 
     if (!user) {
       res.status(404).json({ msg: "User not found" });

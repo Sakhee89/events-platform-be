@@ -6,7 +6,10 @@ import users from "./users";
 
 export const seedData = async () => {
   try {
-    await mongoose.connection.db.dropDatabase();
+    const collections = await mongoose.connection.db.collections();
+    for (let collection of collections) {
+      await collection.drop();
+    }
     console.log("Existing data cleared");
 
     const insertedUsers = await userSchema.insertMany(users);
@@ -15,7 +18,7 @@ export const seedData = async () => {
 
     const userMap = insertedUsers.reduce(
       (acc: Record<string, string>, user) => {
-        acc[user.firebaseUid] = user._id.toString();
+        acc[user.uid] = user._id.toString();
         return acc;
       },
       {}
@@ -31,7 +34,7 @@ export const seedData = async () => {
 
     await eventSchema.insertMany(updatedEvents);
 
-    console.log("Signups seeded successfully");
+    console.log("Events seeded successfully");
   } catch (error) {
     console.error("Error seeding data", error);
   }
