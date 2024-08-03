@@ -51,11 +51,10 @@ export const createEvent = async (req: Request, res: Response) => {
   }
 
   const authToken = extractTokenFromAuthorization(req.headers.authorization!);
-  console.log("authToken", authToken);
 
   try {
     const decodeValue = await supabaseClient.auth.getUser(authToken);
-    console.log("decodeValue", decodeValue);
+
     const userId = decodeValue.data.user?.id;
 
     const user = await userSchema.findOne({
@@ -164,8 +163,6 @@ export const updateEvent = async (req: Request, res: Response) => {
       uid: userId,
     });
 
-    console.log("user", user);
-
     if (!user || user.role !== "staff") {
       res.status(403).json({ msg: "User is not authorised" });
       return;
@@ -216,7 +213,6 @@ export const deleteEvent = async (req: Request, res: Response) => {
 };
 
 export const addAttendeeEvent = async (req: Request, res: Response) => {
-  console.log("addAttendeeEvent");
   const { id } = req.params;
 
   if (!id) {
@@ -234,16 +230,12 @@ export const addAttendeeEvent = async (req: Request, res: Response) => {
       uid: userId,
     });
 
-    console.log("user", user);
-
     if (!user) {
       res.status(403).json({ msg: "User is not authorised" });
       return;
     }
 
     const existingEvent = await eventSchema.findOne(_id);
-
-    console.log("existingEvent", existingEvent);
 
     if (existingEvent?.attendees.includes(user.email)) {
       res.status(201).send(existingEvent);
@@ -252,8 +244,6 @@ export const addAttendeeEvent = async (req: Request, res: Response) => {
     const updatedEvent = await eventSchema.findByIdAndUpdate(_id, {
       attendees: [...(existingEvent?.attendees || []), user.email],
     });
-
-    console.log("updatedEvent", updatedEvent);
 
     res.status(201).send(updatedEvent);
   } catch (error) {
