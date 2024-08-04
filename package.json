@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "You can follow the Getting Started with Atlas guide, to learn how to create a free Atlas account, create your first cluster and get your Connection String to the database. Then, set the Atlas URI connection parameter in server/.env to your Connection String:",
   "dependencies": {
+    "@stripe/stripe-js": "^4.1.0",
     "@supabase/supabase-js": "^2.45.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -20,7 +21,9 @@
     "jest-mock": "^29.7.0",
     "jest-mock-extended": "^3.0.7",
     "mongoose": "^8.4.5",
-    "ts-jest": "^29.2.3"
+    "stripe": "^16.6.0",
+    "ts-jest": "^29.2.3",
+    "googleapis": "^140.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

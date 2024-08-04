@@ -7,6 +7,7 @@ import {
   updateEvent,
   deleteEvent,
   addAttendeeEvent,
+  getAllEventsWithAttendee,
 } from "../controllers/event-controllers";
 import { decodeToken } from "../middleware/supabaseAuthLayer";
 
@@ -18,13 +19,15 @@ eventRouter.get("/user/:userId", getAllEventByUserId);
 if (process.env.NODE_ENV !== "development") {
   eventRouter.delete("/:id", deleteEvent).use(decodeToken);
   eventRouter.post("/", createEvent).use(decodeToken);
-  eventRouter.patch("/:id", updateEvent).use(decodeToken);
+  eventRouter.put("/:id", updateEvent).use(decodeToken);
   eventRouter.patch("/attend/:id", addAttendeeEvent).use(decodeToken);
+  eventRouter.get("/by/attendee", getAllEventsWithAttendee).use(decodeToken);
 } else {
   eventRouter.delete("/:id", deleteEvent);
   eventRouter.post("/", createEvent);
-  eventRouter.patch("/:id", updateEvent);
+  eventRouter.put("/:id", updateEvent);
   eventRouter.patch("/attend/:id", addAttendeeEvent);
+  eventRouter.get("/by/attendee", getAllEventsWithAttendee);
 }
 
 export default eventRouter;

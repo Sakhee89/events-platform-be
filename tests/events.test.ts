@@ -323,7 +323,7 @@ describe("/api/events/:id", () => {
       });
   }, 60000);
 
-  test("should PATCH: 200 and update the event details", async () => {
+  test("should PUT: 200 and update the event details", async () => {
     let eventId: string | undefined;
 
     try {
@@ -344,7 +344,7 @@ describe("/api/events/:id", () => {
       };
 
       await request(app)
-        .patch(`/api/events/${eventId}`)
+        .put(`/api/events/${eventId}`)
         .send(updateFields)
         .expect(200)
         .then((response) => {
@@ -357,7 +357,7 @@ describe("/api/events/:id", () => {
     }
   }, 60000);
 
-  test("should PATCH: 400 and return an error for invalid update data", async () => {
+  test("should PUT: 400 and return an error for invalid update data", async () => {
     let eventId: string | undefined;
 
     try {
@@ -373,7 +373,7 @@ describe("/api/events/:id", () => {
 
     if (eventId) {
       await request(app)
-        .patch(`/api/events/${eventId}`)
+        .put(`/api/events/${eventId}`)
         .send({ invalidField: "Invalid Data" })
         .expect(400)
         .then((response) => {
