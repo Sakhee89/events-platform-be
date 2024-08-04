@@ -1,6 +1,6 @@
 import app from "../app";
 import dotenv from "dotenv";
-import { seedData } from "./seedTestData";
+import { seedData, stopServer } from "./seedTestData";
 import request from "supertest";
 import userSchema, { User } from "../models/userSchema";
 import mongoose from "mongoose";
@@ -22,13 +22,16 @@ dotenv.config({
   path: `.env.${ENV}`,
 });
 
-describe("/api/users", () => {
-  beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL!);
-  }, 50000);
+beforeAll(async () => {
+  await seedData();
+});
 
+afterAll(async () => {
+  await stopServer();
+});
+
+describe("/api/users", () => {
   beforeEach(async () => {
-    await seedData();
     const mocksupabaseClient = mocked(
       supabaseClient
     ).auth.getUser.mockResolvedValue({
@@ -40,10 +43,6 @@ describe("/api/users", () => {
       error: null,
     });
   });
-
-  afterAll(async () => {
-    await mongoose.connection.close();
-  }, 50000);
 
   test("should GET: 200 and sends an array of users to the client", async () => {
     await request(app)
@@ -99,12 +98,7 @@ describe("/api/users", () => {
 });
 
 describe("/api/users/:id", () => {
-  beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL!);
-  }, 50000);
-
   beforeEach(async () => {
-    await seedData();
     const mocksupabaseClient = mocked(
       supabaseClient
     ).auth.getUser.mockResolvedValue({
@@ -116,10 +110,6 @@ describe("/api/users/:id", () => {
       error: null,
     });
   });
-
-  afterAll(async () => {
-    await mongoose.connection.close();
-  }, 50000);
 
   test("should GET: 200 and sends a user object to the client", async () => {
     await request(app)

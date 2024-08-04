@@ -7,12 +7,29 @@ import supabaseClient from "../config/supabaseConfig";
 
 export const getEvents = async (req: Request, res: Response) => {
   try {
-    const { startDate, location, theme, priceType, title } = req.query;
+    const {
+      date,
+      location,
+      theme,
+      priceType,
+      title,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      return res.status(400).json({ msg: "Invalid page number" });
+    }
+    if (isNaN(limitNumber) || limitNumber < 1) {
+      return res.status(400).json({ msg: "Invalid limit number" });
+    }
 
     const filter: Record<string, any> = {};
 
     if (theme) filter.theme = theme;
-    if (startDate) filter.date = { $gt: new Date(startDate as string) };
+    if (date) filter.date = { $gt: new Date(date as string) };
     if (location) filter.location = new RegExp(location as string, "i");
     if (title) filter.title = new RegExp(title as string, "i");
     if (priceType) {
@@ -23,7 +40,11 @@ export const getEvents = async (req: Request, res: Response) => {
       }
     }
 
-    const events = await eventSchema.find<Event>(filter);
+    const events = await eventSchema
+      .find<Event>(filter)
+      .sort({ _id: -1 })
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber);
 
     res.status(200).send({ events: events });
   } catch (error) {

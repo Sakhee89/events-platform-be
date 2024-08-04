@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import app from "../app";
 import dotenv from "dotenv";
-import { seedData } from "./seedTestData";
+import { seedData, stopServer } from "./seedTestData";
 import request from "supertest";
 import userSchema from "../models/userSchema";
 import eventSchema from "../models/eventSchema";
@@ -26,13 +26,16 @@ dotenv.config({
 
 type EventTestData = Omit<Event, "createdBy"> & { createdBy: string };
 
-describe("/api/events", () => {
-  beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL!);
-  }, 60000);
+beforeAll(async () => {
+  await seedData();
+});
 
+afterAll(async () => {
+  await stopServer();
+});
+
+describe("/api/events", () => {
   beforeEach(async () => {
-    await seedData();
     const mocksupabaseClient = mocked(
       supabaseClient
     ).auth.getUser.mockResolvedValue({
@@ -45,8 +48,24 @@ describe("/api/events", () => {
     });
   });
 
-  afterAll(async () => {
-    await mongoose.connection.close();
+  test("should GET: 200 and sends an array of events to the client", async () => {
+    await request(app)
+      .get("/api/events")
+      .expect(200)
+      .then((response) => {
+        response.body.events.forEach((event: EventTestData) => {
+          expect(typeof event.title).toBe("string");
+          expect(typeof event.description).toBe("string");
+          expect(typeof event.date).toBe("string");
+          expect(typeof event.endDate).toBe("string");
+          expect(typeof event.location).toBe("string");
+          expect(typeof event.price).toBe("number");
+          expect(typeof event.theme).toBe("string");
+          expect(typeof event.createdBy).toBe("string");
+          expect(typeof event.calendarId).toBe("string");
+          expect(typeof event.attendees).toBe("object");
+        });
+      });
   }, 60000);
 
   test("should GET: 200 and sends an array of events to the client", async () => {
@@ -63,9 +82,95 @@ describe("/api/events", () => {
           expect(typeof event.price).toBe("number");
           expect(typeof event.theme).toBe("string");
           expect(typeof event.createdBy).toBe("string");
+          expect(typeof event.calendarId).toBe("string");
+          expect(typeof event.attendees).toBe("object");
         });
       });
   }, 60000);
+
+  test("should GET: 200 and return events with a date after the specified startDate", async () => {
+    const startDate = new Date();
+
+    const response = await request(app)
+      .get("/api/events")
+      .query({ date: startDate.toISOString() })
+      .expect(200);
+    response.body.events.forEach((event: EventTestData) => {
+      const eventDate = new Date(event.date).getTime();
+      const startDateTime = startDate.getTime();
+
+      expect(eventDate).toBeGreaterThanOrEqual(startDateTime);
+    });
+  });
+
+  test("should GET: 200 and return events with the specified theme", async () => {
+    const theme = "Community";
+    const response = await request(app)
+      .get("/api/events")
+      .query({ theme })
+      .expect(200);
+
+    response.body.events.forEach((event: EventTestData) => {
+      expect(event.theme).toBe(theme);
+    });
+  });
+
+  test("should GET: 200 and return events matching the specified location", async () => {
+    const location = "Community Hall";
+    const response = await request(app)
+      .get("/api/events")
+      .query({ location })
+      .expect(200);
+
+    response.body.events.forEach((event: EventTestData) => {
+      expect(event.location.toLowerCase()).toContain(location.toLowerCase());
+    });
+  });
+
+  test("should GET: 200 and return free events when priceType is set to 'free'", async () => {
+    const priceType = "free";
+    const response = await request(app)
+      .get("/api/events")
+      .query({ priceType })
+      .expect(200);
+
+    response.body.events.forEach((event: EventTestData) => {
+      expect(event.price).toBe(0);
+    });
+  });
+
+  test("should GET: 200 and return paid events when priceType is set to 'paid'", async () => {
+    const priceType = "paid";
+    const response = await request(app)
+      .get("/api/events")
+      .query({ priceType })
+      .expect(200);
+
+    response.body.events.forEach((event: EventTestData) => {
+      expect(event.price).toBeGreaterThan(0);
+    });
+  });
+
+  test("should GET: 200 and return events with titles matching the specified title", async () => {
+    const title = "Community Meetup";
+    const response = await request(app)
+      .get("/api/events")
+      .query({ title })
+      .expect(200);
+
+    response.body.events.forEach((event: EventTestData) => {
+      expect(event.title.toLowerCase()).toContain(title.toLowerCase());
+    });
+  });
+
+  test("should GET: 200 and return an empty array if no events match the filters", async () => {
+    const response = await request(app)
+      .get("/api/events")
+      .query({ title: "NonExistentEventTitle" })
+      .expect(200);
+
+    expect(response.body.events).toEqual([]);
+  });
 
   test("should POST: 201 and inserts a new event to the events collection, and returns the created event", async () => {
     const user = await userSchema.findOne({ uid: "user1Uid" });
@@ -73,13 +178,19 @@ describe("/api/events", () => {
       throw new Error("User not found");
     }
 
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setHours(endDate.getHours() + 2);
+
     const newEvent = {
       title: "Community Meetup",
       description: "A community gathering to discuss local events.",
-      date: new Date(),
+      date: startDate.toISOString(),
+      endDate: endDate.toISOString(),
       location: "Community Hall",
       price: 10,
       theme: "Community",
+      calendarId: "cal-1234",
       createdBy: user._id.toString(),
     };
 
@@ -95,10 +206,13 @@ describe("/api/events", () => {
           newEvent.description
         );
         expect(response.body).toHaveProperty("date");
+        expect(response.body).toHaveProperty("endDate");
         expect(response.body).toHaveProperty("location", newEvent.location);
         expect(response.body).toHaveProperty("price", newEvent.price);
         expect(response.body).toHaveProperty("theme", newEvent.theme);
         expect(response.body).toHaveProperty("createdBy", user._id.toString());
+        expect(response.body).toHaveProperty("calendarId", newEvent.calendarId);
+        expect(response.body).toHaveProperty("attendees");
         expect(response.body).toHaveProperty("__v");
       });
   }, 60000);
@@ -124,9 +238,6 @@ describe("/api/events/:id", () => {
 
   beforeAll(async () => {
     try {
-      await mongoose.connect(process.env.DATABASE_URL!);
-      await seedData();
-
       const user = await userSchema.findOne({
         uid: "user4Uid",
       });
@@ -150,14 +261,6 @@ describe("/api/events/:id", () => {
       eventId = savedEvent._id.toString();
     } catch (error) {
       console.error("Error in beforeAll: ", error);
-    }
-  }, 60000);
-
-  afterAll(async () => {
-    try {
-      await mongoose.connection.close();
-    } catch (error) {
-      console.error("Error in afterAll: ", error);
     }
   }, 60000);
 
@@ -290,21 +393,31 @@ describe("/api/events/:id", () => {
     const deletedEvent = await eventSchema.findById({ _id: eventId });
     expect(deletedEvent).toBeNull();
   }, 60000);
+
+  test("should DELETE: 404 and return appropriate error message when event id does not exist", async () => {
+    const nonExistentId = new mongoose.Types.ObjectId();
+
+    await request(app)
+      .delete(`/api/events/${nonExistentId}`)
+      .expect(404)
+      .then((response) => {
+        expect(response.body.msg).toBe("Event not found");
+      });
+  }, 60000);
+
+  test("should DELETE: 404 and return appropriate error message when not valid event id", async () => {
+    const nonExistentId = new mongoose.Types.ObjectId();
+
+    await request(app)
+      .delete(`/api/events/notValidId`)
+      .expect(400)
+      .then((response) => {
+        expect(response.body.msg).toBe("Invalid event ID format");
+      });
+  }, 60000);
 });
 
 describe("/api/events/user/:userId", () => {
-  beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL!);
-  }, 60000);
-
-  beforeEach(async () => {
-    await seedData();
-  });
-
-  afterAll(async () => {
-    await mongoose.connection.close();
-  }, 60000);
-
   test("should GET: 200 and return events for a valid user ID", async () => {
     let userId: string | undefined;
     try {
