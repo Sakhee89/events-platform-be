@@ -9,7 +9,18 @@ const app: Express = express();
 //   optionsSuccessStatus: 200,
 // };
 
-app.use(cors());
+const options = [
+  cors({
+    origin: "*",
+    methods: "*",
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  }),
+];
+
+app.use(options);
+
+// app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
