@@ -69,9 +69,21 @@ Next, on your stripe account once it's set up go to your dashboard, click Develo
 
 **Running the Project**
 
+To start the server, use the following command:
+
 ```bash
 npm run start
+```
+
+To run the server in development mode use:
+
+```bash
 npm run dev
+```
+
+To run the test suite, use:
+
+```bash
 npm run test
 ```
 
