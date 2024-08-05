@@ -1,12 +1,20 @@
 import express, { Express } from "express";
 import apiRouter from "./routes/api-router";
 import cors from "cors";
+import dotenv from "dotenv";
+
 const ENV = process.env.NODE_ENV || "development";
 const app: Express = express();
 
-app.use(cors({
-    origin: "https://fe-events-platform.vercel.app"
-}));
+dotenv.config({
+  path: `.env.${ENV}`,
+});
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL!,
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
