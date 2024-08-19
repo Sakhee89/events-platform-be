@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import eventSchema, { Event } from "../models/eventSchema";
-import mongoose from "mongoose";
+import mongoose, { SortOrder } from "mongoose";
 import userSchema from "../models/userSchema";
 import { extractTokenFromAuthorization } from "../utils/extractTokenFromAuthorization";
 import supabaseClient from "../config/supabaseConfig";
@@ -15,6 +15,7 @@ export const getEvents = async (req: Request, res: Response) => {
       title,
       page = 1,
       limit = 10,
+      sortOrder = "newest",
     } = req.query;
 
     const pageNumber = parseInt(page as string, 10);
@@ -40,9 +41,12 @@ export const getEvents = async (req: Request, res: Response) => {
       }
     }
 
+    const sortOption: Record<string, SortOrder> =
+      sortOrder === "oldest" ? { date: 1 } : { date: -1 };
+
     const events = await eventSchema
       .find<Event>(filter)
-      .sort({ _id: -1 })
+      .sort(sortOption)
       .skip((pageNumber - 1) * limitNumber)
       .limit(limitNumber);
 
