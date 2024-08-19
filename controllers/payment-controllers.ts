@@ -35,7 +35,6 @@ export const eventPayment = async (req: Request, res: Response) => {
 
     const eventPrice = event.price * 100;
 
-
     const paymentIntent = await stripe.paymentIntents.create({
       amount: eventPrice,
       currency: "GBP",

@@ -221,7 +221,6 @@ export const deleteEvent = async (req: Request, res: Response) => {
     }
 
     const authToken = extractTokenFromAuthorization(req.headers.authorization!);
-    console.log(authToken);
 
     const decodeValue = await supabaseClient.auth.getUser(authToken);
     const userId = decodeValue.data.user?.id;
