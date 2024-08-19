@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import eventSchema, { Event } from "../models/eventSchema";
-import mongoose, { SortOrder } from "mongoose";
+import mongoose from "mongoose";
 import userSchema from "../models/userSchema";
 import { extractTokenFromAuthorization } from "../utils/extractTokenFromAuthorization";
 import supabaseClient from "../config/supabaseConfig";
@@ -41,7 +41,7 @@ export const getEvents = async (req: Request, res: Response) => {
       }
     }
 
-    const sortOption: Record<string, SortOrder> =
+    const sortOption: Record<string, any> =
       sortOrder === "oldest" ? { date: 1 } : { date: -1 };
 
     const events = await eventSchema
